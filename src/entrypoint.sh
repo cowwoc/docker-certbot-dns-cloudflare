@@ -4,6 +4,12 @@
 # shellcheck disable=SC3048
 trap "echo Shutdown requested; exit 0" SIGTERM
 
+# Permissions must be created after volumes have been mounted; otherwise, windows file system permissions will override
+# the permissions set within the container.
+mkdir -p /etc/letsencrypt/accounts /var/log/letsencrypt /var/lib/letsencrypt
+chmod 755 /etc/letsencrypt /var/lib/letsencrypt
+chmod 700 /etc/letsencrypt/accounts /var/log/letsencrypt
+
 cat << "EOF"
  ____________________
 < Certbot, activate! >
@@ -47,7 +53,8 @@ run_certbot() {
         --key-type "$CERTBOT_KEY_TYPE" \
         --email "$CERTBOT_EMAIL" \
         --agree-tos \
-        --non-interactive
+        --non-interactive \
+        --strict-permissions
     exit_code=$?
     if [ $exit_code -ne 0 ]; then
         echo "Error: certbot command failed with exit code $exit_code"
